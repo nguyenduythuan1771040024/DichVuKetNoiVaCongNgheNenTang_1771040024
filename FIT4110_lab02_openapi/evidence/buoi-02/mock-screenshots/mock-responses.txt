@@ -1,0 +1,48 @@
+======================================================================
+LAB 02 PRISM MOCK SERVER TEST RESULTS (5 MANDATORY REQUEST EXAMPLES)
+======================================================================
+
+[1/5] Happy path: GET /health
+HTTP/1.1 200 OK
+version: 1.0.0
+content-type: application/json; charset=utf-8
+content-length: 71
+
+{"status":"HEALTHY","timestamp":"2026-08-11T08:00:00Z","version":"1.0.0"}
+
+----------------------------------------------------------------------
+
+[2/5] Happy path: GET /alerts/recent
+HTTP/1.1 200 OK
+content-type: application/json; charset=utf-8
+content-length: 298
+
+[{"alertId":"0196fb3d-4ad7-7d1e-9f49-5d5148d2babc","sourceService":"core-business","alertType":"UNAUTHORIZED_ACCESS","severity":"HIGH","message":"Detect unauthorized entry attempt at main gate","createdAt":"2026-08-11T08:00:00Z","acknowledgedAt":null,"relatedEventId":"0196fb3d-4ad7-7d1e-9f49-5d5148d2babc"}]
+
+----------------------------------------------------------------------
+
+[3/5] Happy path: POST /alerts
+HTTP/1.1 201 Created
+location: /alerts/0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+content-type: application/json; charset=utf-8
+content-length: 298
+
+{"alertId":"0196fb3d-4ad7-7d1e-9f49-5d5148d2babc","sourceService":"core-business","alertType":"UNAUTHORIZED_ACCESS","severity":"HIGH","message":"Detect unauthorized entry attempt at main gate","createdAt":"2026-08-11T08:00:00Z","acknowledgedAt":null,"relatedEventId":"0196fb3d-4ad7-7d1e-9f49-5d5148d2babc"}
+
+----------------------------------------------------------------------
+
+[4/5] Error case: GET /alerts/recent without token
+HTTP/1.1 401 Unauthorized
+content-type: application/problem+json; charset=utf-8
+content-length: 213
+
+{"type":"https://smartcampus.edu.vn/probs/unauthorized","title":"Unauthorized Access","status":401,"detail":"Missing or invalid Bearer token in Authorization header","instance":"/alerts/recent","errors":[]}
+
+----------------------------------------------------------------------
+
+[5/5] Error case: POST /alerts invalid payload
+HTTP/1.1 422 Unprocessable Entity
+content-type: application/problem+json; charset=utf-8
+content-length: 317
+
+{"type":"https://smartcampus.edu.vn/probs/validation-error","title":"Unprocessable Entity","status":422,"detail":"Request payload failed schema validation","instance":"/alerts","errors":[{"field":"alertType","code":"INVALID_TYPE","message":"must be string"},{"field":"sourceService","code":"REQUIRED","message":"is required"}]}
