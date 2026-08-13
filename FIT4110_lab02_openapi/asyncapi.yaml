@@ -1,0 +1,135 @@
+asyncapi: '2.6.0'
+info:
+  title: Core Business Service AsyncAPI Contract
+  version: '1.0.0'
+  description: |
+    Đặc tả hợp đồng sự kiện bất đồng bộ (Event-Driven Architecture) cho Core Business Service.
+    Sử dụng Message Broker RabbitMQ / AMQP 0-9-1.
+
+servers:
+  rabbitmq:
+    url: amqp://localhost:5672
+    protocol: amqp
+    description: RabbitMQ Local Broker cho Smart Campus Operations Platform
+
+channels:
+  campus.alerts:
+    description: Channel phát các sự kiện cảnh báo an ninh tới Notification Service và Analytics Service.
+    publish:
+      summary: Phát sự kiện khi Core Business tạo cảnh báo mới (Pair 04 & Pair 08)
+      operationId: publishAlertCreated
+      message:
+        $ref: '#/components/messages/AlertCreatedEvent'
+
+  campus.telemetry:
+    description: Channel nhận dữ liệu cảm biến đo đạc từ IoT Ingestion Service.
+    subscribe:
+      summary: Đăng ký nhận sự kiện dữ liệu cảm biến (Pair 05)
+      operationId: subscribeSensorMeasured
+      message:
+        $ref: '#/components/messages/SensorMeasuredEvent'
+
+components:
+  messages:
+    AlertCreatedEvent:
+      name: AlertCreatedEvent
+      title: Sự kiện cảnh báo mới được tạo
+      summary: Phát ngầm sang Notification Service (gửi Telegram/Email) và Analytics Service (tính KPI).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AlertEventPayload'
+
+    SensorMeasuredEvent:
+      name: SensorMeasuredEvent
+      title: Sự kiện đo đạc cảm biến từ IoT Ingestion
+      summary: Nhận từ IoT Ingestion để kiểm tra vi phạm ngưỡng nghiệp vụ.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SensorEventPayload'
+
+  schemas:
+    AlertEventPayload:
+      type: object
+      additionalProperties: false
+      required: [eventId, eventType, occurredAt, correlationId, source, data]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Mã UUID duy nhất của sự kiện (Idempotency Key)
+          example: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+        eventType:
+          type: string
+          description: Tên loại sự kiện
+          example: core.alert.created
+        occurredAt:
+          type: string
+          format: date-time
+          description: Thời điểm phát sinh sự kiện ISO8601 UTC
+          example: '2026-08-11T10:00:00Z'
+        correlationId:
+          type: string
+          format: uuid
+          description: Mã UUID truy vết luồng sự kiện liên quan
+          example: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+        source:
+          type: string
+          description: Tên service phát sự kiện
+          example: core-business
+        data:
+          type: object
+          additionalProperties: false
+          required: [alertId, alertType, severity, message]
+          properties:
+            alertId:
+              type: string
+              example: ALT-2026-001
+            alertType:
+              type: string
+              enum: [UNAUTHORIZED_ACCESS, SENSOR_THRESHOLD_EXCEEDED, UNKNOWN_PERSON, SYSTEM_ERROR]
+              example: UNAUTHORIZED_ACCESS
+            severity:
+              type: string
+              enum: [LOW, MEDIUM, HIGH, CRITICAL]
+              example: HIGH
+            message:
+              type: string
+              example: Phát hiện truy cập trái phép tại cổng chính
+
+    SensorEventPayload:
+      type: object
+      additionalProperties: false
+      required: [eventId, eventType, occurredAt, source, data]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          example: 0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+        eventType:
+          type: string
+          example: iot.sensor.measured
+        occurredAt:
+          type: string
+          format: date-time
+          example: '2026-08-11T10:00:00Z'
+        source:
+          type: string
+          example: iot-ingestion
+        data:
+          type: object
+          additionalProperties: false
+          required: [deviceId, metric, value, unit]
+          properties:
+            deviceId:
+              type: string
+              example: SENSOR-001
+            metric:
+              type: string
+              enum: [temperature, humidity, smoke, motion]
+              example: temperature
+            value:
+              type: number
+              example: 38.5
+            unit:
+              type: string
+              example: celsius
