@@ -2,6 +2,9 @@
 *.pdf
 *.PDF
 
+# Exclude Student Kit
+FIT4110_Student_Kit/
+
 # Node dependencies
 node_modules/
 npm-debug.log*
